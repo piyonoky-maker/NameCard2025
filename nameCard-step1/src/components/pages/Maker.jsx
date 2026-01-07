@@ -1,7 +1,7 @@
 import styled from "styled-components"
 import Header from "../include/Header"
 import Footer from "../include/Footer"
-import { logout } from "../../service/authApi"
+import { logout, subscribeAuthChange } from "../../service/authApi"
 import { useNavigate } from "react-router"
 import CardEditor from "./CardEditor"
 import Preview from "./Preview"
@@ -22,28 +22,24 @@ const ContainerDiv = styled.div`
   min-height: 0;
 `
 
-const Maker = ({FileInput}) => {
+const Maker = ({FileInput, cardLogic}) => {
 
-  const [cards, setCards] = useState({
-    '1':{
-      id: '1',
-      theme: 'dark',
-      fileName: 'lee',
-      fileURL: 'https://res.cloudinary.com/dabcqtmbm/image/upload/v1707156245/lmbxljzqmcylnyngwafk.jpg',
-    },
-    '2':{
-      id: '2',
-      theme: 'light',
-      fileName: 'kim',
-      fileURL: null,
-    },
-    '3':{
-      id: '3',
-      theme: 'colorful',
-      fileName: 'park',
-      fileURL: null,
-    },    
-  });   
+  const [cards, setCards] = useState({});//end of 더미 데이터   
+  const [userId, setUserId] = useState();
+
+  // 로그인이 풀렸는지 아닌지 항상 체크해야 함
+  useEffect(() => {
+    const unsubscribe = subscribeAuthChange((user) => {
+      if(user){
+        setUserId(user.uid);
+      }else{
+        setUserId(null);
+      }
+      // 사용자 정리 함수
+      // 컴포넌트 언마운트시 구독 해재제 ( 후처리 )
+    });
+    return () => unsubscribe();
+  }, []);
 
   const navigate = useNavigate()
   const handleLogout = async() => {
@@ -64,13 +60,31 @@ const Maker = ({FileInput}) => {
   const insertOrUpdateCard = card => {
     console.log('insertOrUpdateCard 호출')
     console.log(card)
+    setCards(cards => {
+      //추가되지 전에 카드 정보 출력
+      console.log(cards);
+      const updated = {...cards};
+      // id가 오브젝트안에 없다면 새로운 것이 추가됨
+      updated[card.id] = card;  // card는 CardAddForm에서 파라미터로 받은 값
+      return updated;
+    });
+    console.log(`${userId}, ${card}`)
+    cardLogic.saveCard(userId, card);
   }//end of insertOrUpdateCard
 
+  // deleteCard는 CardEditor에서 호출하는데
+  // 삭제 정보는 상위 컴포넌트인 Maker까지 전달 되어야한다
   const deleteCard = card => {
     console.log('deleteCard 호출')
     console.log(card)
     // delete from schedule where id = 2
     console.log(`삭제 카드 card.id ${card.id}`)
+    setCards((cards) => {
+      const updated = { ...cards}
+      delete updated[card.id];
+      return updated;
+    });
+    cardLogic.removeCard(userId, card);
   }
 
 
