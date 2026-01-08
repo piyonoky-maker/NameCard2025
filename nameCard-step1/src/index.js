@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router';
 import { auth } from './service/authApi';
 import ImageUploader from './service/image_upload';
 import ImageFileInput from './components/common/ImageFileInput';
-import CardLogic from '.service/cardService';
+import CardLogic from './service/cardService';
 import { app } from './service/firebase';
 const imageUploader = new ImageUploader() 
 const cardLogic = new CardLogic(app);
@@ -23,9 +23,8 @@ console.log(auth)
 root.render(
   <>
     <BrowserRouter>
-    {/* 사용자 정의 태그는 일급함수 - props( properties - 키, 값 ) */}
+      {/* 사용자 정의 태그는 일급함수 - props(properties-키,값) */}
       <App FileInput={FileInput} cardLogic={cardLogic} />
     </BrowserRouter>
   </>
 );
-

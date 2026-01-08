@@ -5,7 +5,7 @@ import { logout, subscribeAuthChange } from "../../service/authApi"
 import { useNavigate } from "react-router"
 import CardEditor from "./CardEditor"
 import Preview from "./Preview"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 
 const MarkerDiv = styled.div`
@@ -25,21 +25,25 @@ const ContainerDiv = styled.div`
 const Maker = ({FileInput, cardLogic}) => {
 
   const [cards, setCards] = useState({});//end of 더미 데이터   
-  const [userId, setUserId] = useState();
+  const [userId, setUserId] = useState()
+  // 구글 로그인을 활용한 인증이므로 인증에 대한 내부 처리는 구글이 알고 있다.
+  // 로그인이 풀렸는지 아직 유지되고 있는지 체크
 
-  // 로그인이 풀렸는지 아닌지 항상 체크해야 함
   useEffect(() => {
     const unsubscribe = subscribeAuthChange((user) => {
       if(user){
-        setUserId(user.uid);
-      }else{
-        setUserId(null);
+        // 여기까지 진입이되면 로그인 상태 라는 의미
+        setUserId(user.uid)
       }
-      // 사용자 정리 함수
-      // 컴포넌트 언마운트시 구독 해재제 ( 후처리 )
-    });
-    return () => unsubscribe();
-  }, []);
+      //로그아웃 상태임
+      else{
+        setUserId(null)
+      }
+    })
+    //사용자 정리 함수
+    // 콤포넌트 언마운트시 구독 해제(후처리)
+    return () => unsubscribe()
+  },[])
 
   const navigate = useNavigate()
   const handleLogout = async() => {
@@ -56,36 +60,34 @@ const Maker = ({FileInput, cardLogic}) => {
   // 함수의 파라미터 자리와 props(properties)를 사용하면 된다.
   // Firebase에서 조회된 결과를 상위 컴포넌트에서 가지고 있으니 상위 컴포넌트에서 
   // 수정,입력,삭제를 처리합니다 
-
+  // 파라미터도 CardAddFormdl vlfdygka 
   const insertOrUpdateCard = card => {
     console.log('insertOrUpdateCard 호출')
     console.log(card)
     setCards(cards => {
-      //추가되지 전에 카드 정보 출력
-      console.log(cards);
-      const updated = {...cards};
-      // id가 오브젝트안에 없다면 새로운 것이 추가됨
-      updated[card.id] = card;  // card는 CardAddForm에서 파라미터로 받은 값
-      return updated;
-    });
+      //추가 되기 전에 카드 정보 출력
+      console.log(cards)
+      const updated = {...cards}
+      //어차피 id가 오브젝트안에 없다면 새로운 것이 추가됨.
+      updated[card.id] = card //card는 CardAddForm에서 파라미터로 받은 값
+      return updated
+    })
     console.log(`${userId}, ${card}`)
-    cardLogic.saveCard(userId, card);
+    cardLogic.saveCard(userId, card)
   }//end of insertOrUpdateCard
 
-  // deleteCard는 CardEditor에서 호출하는데
-  // 삭제 정보는 상위 컴포넌트인 Maker까지 전달 되어야한다
   const deleteCard = card => {
     console.log('deleteCard 호출')
     console.log(card)
     // delete from schedule where id = 2
     console.log(`삭제 카드 card.id ${card.id}`)
     setCards((cards) => {
-      const updated = { ...cards}
-      delete updated[card.id];
-      return updated;
-    });
-    cardLogic.removeCard(userId, card);
-  }
+      const updated = {...cards}
+      delete updated[card.id]
+      return updated
+    })
+    cardLogic.removeCard(userId, card)
+  }//end of deleteCard
 
 
   return (
